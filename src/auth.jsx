@@ -22,17 +22,15 @@ const Auth = () => {
     authenticate();
   };
 
-  // If authenticated is true, render the App component
   if (authenticated) {
     return <App />;
   }
 
-  // If not authenticated, render the authentication form
   return (
     <form onSubmit={handleSubmit}>
       <label>
         Enter Password:
-        <input type="password" value={password} onChange={handlePasswordChange} />
+        <input type="password" value={password} onChange={handlePasswordChange} autoComplete="no"/>
       </label>
       <button type="submit">Submit</button>
     </form>
