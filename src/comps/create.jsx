@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import db from "../firebase/firebase";
+import {db} from "../firebase/firebase";
 import { addDoc, collection, doc, setDoc } from "firebase/firestore";
 import { nanoid } from "nanoid";
 import { storage } from "../firebase/firebase";
@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function CreateRec() {
   const Navigate = useNavigate();
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     name: "",
     address: "",
     contact: "",
@@ -16,13 +16,12 @@ export default function CreateRec() {
     DOB: "",
     qualifications: [],
   });
-  const [contact, setContact] = useState('');
-
-  const [file, setFile] = React.useState("");
-  const [resume, setResume] = React.useState("");
-  const [imageURL, setImageURL] = React.useState("");
-  const [resumeURL, setResumeURL] = React.useState("");
-  const [isUploading, setIsUploading] = React.useState(false);
+  const [progress, setProgress] = useState(0);
+  const [file, setFile] = useState("");
+  const [resume, setResume] = useState("");
+  const [imageURL, setImageURL] = useState("");
+  const [resumeURL, setResumeURL] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const addField = (e) => {
     e.preventDefault();
@@ -65,15 +64,7 @@ export default function CreateRec() {
         (snapshot) => {
           const progress =
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Upload has " + progress + "% completed");
-          switch (snapshot.state) {
-            case "paused":
-              console.log("Upload has been paused");
-              break;
-            case "running":
-              console.log("Upload is running");
-              break;
-          }
+          setProgress(progress);
         },
         (error) => {
           console.error(error);
@@ -82,6 +73,7 @@ export default function CreateRec() {
         () => {
           getDownloadURL(uploadTask.snapshot.ref)
             .then((downloadURL) => {
+              setProgress(0);
               resolve(downloadURL);
             })
             .catch((error) => {
@@ -94,16 +86,16 @@ export default function CreateRec() {
 
   async function submitForm(e) {
     e.preventDefault();
-    setIsUploading(true)
+    setIsUploading(true);
     const genrateID = nanoid();
 
     if (!resume) {
-      alert('Resume is required');
+      alert("Resume is required");
       setIsUploading(false);
       return;
     }
     if (!file) {
-      alert('Image is required');
+      alert("Image is required");
       setIsUploading(false);
       return;
     }
@@ -125,43 +117,39 @@ export default function CreateRec() {
     } catch (error) {
       console.error("Error adding document: ", error);
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
+    }
+
+    resetForm();
+    alert("Data Uploaded");
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "DOB") {
+      const currentDate = new Date();
+      const selectedDate = new Date(value);
+
+      if (selectedDate >= currentDate) {
+        alert("DOB should be less than today's date");
+        return;
+      }
     }
 
     setFormData({
-      name: "",
-      address: "",
-      contact: "",
-      email: "",
-      DOB: "",
-      qualifications: [],
-    });
-
-    setFile(null);
-    setResume(null);
-    setImageURL(null);
-    setResumeURL(null);
-    alert("Data Uploaded")
-
-  }
-
-  function handleChange(e) {
-    setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
-
-
-  }
-
-  const handleContactChange = (e) => {
-    const inputText = e.target.value.replace(/\D/g, ''); 
-    setFormData((prevData) => ({
-      ...prevData,
-      contact: inputText.slice(0, 10), 
-    }));
   };
 
+  const handleContactChange = (e) => {
+    const inputText = e.target.value.replace(/\D/g, '');
+    setFormData((prevData) => ({
+      ...prevData,
+      contact: inputText.slice(0, 10),
+    }));
+  };
 
   const resetForm = () => {
     setFormData({
@@ -177,7 +165,6 @@ export default function CreateRec() {
     setImageURL(null);
     setResumeURL(null);
   };
-
 
   return (
     <div className="createHome">
@@ -224,8 +211,8 @@ export default function CreateRec() {
                 value={formData.contact}
                 onChange={handleContactChange}
                 autoComplete="yes"
-                pattern="[0-9]*" // Allow only numeric characters
-                maxLength="10"    // Limit to 10 characters
+                pattern="[0-9]*"
+                maxLength="10"
                 required
               />
             </div>
@@ -329,8 +316,9 @@ export default function CreateRec() {
           <br />
           <div className="save-delete">
             <button className="buttoncreate saveButton" type="submit" disabled={isUploading}>
-              {isUploading ? `uploading` : "Save"}
+              {isUploading ? `Uploading... ${progress.toFixed(2)}%` : "Save"}
             </button>
+
             <button className="buttoncreate resetButton" type="button" onClick={resetForm}>
               Reset
             </button>

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import React from 'react';
 import { getDocs, collection } from "firebase/firestore";
-import db from "../firebase/firebase";
+import {db} from "../firebase/firebase";
 
 export default function Homepage() {
   const [reccount, setRecordCount] = React.useState(0);

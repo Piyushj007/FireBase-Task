@@ -1,14 +1,13 @@
-import React from "react";
-import db from "../firebase/firebase";
-import { collection, getDocs } from "firebase/firestore";
-import { doc, deleteDoc } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { getStorage, deleteObject, ref } from "firebase/storage";
 import { Link } from "react-router-dom";
+import {db} from "../firebase/firebase";
 
 export default function ViewRecords() {
-  const [getUser, setGetUser] = React.useState([]);
+  const [getUser, setGetUser] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "user"));
@@ -21,31 +20,29 @@ export default function ViewRecords() {
     fetchData();
   }, []);
 
-  function trimUrl(url) {
+  const trimUrl = (url) => {
     const startIndex = url.indexOf("o/") + "o/".length;
     const endIndex = url.indexOf("?");
-    const trimmedUrl = url.substring(startIndex, endIndex);
-    return decodeURIComponent(trimmedUrl.replace(/\%20/g, " "));
-  }
+    return decodeURIComponent(url.substring(startIndex, endIndex).replace(/\%20/g, " "));
+  };
 
   const deleteRecord = async (user) => {
     const storage = getStorage();
-
     const imgTrimUrl = trimUrl(user.img);
     const resTrimUrl = trimUrl(user.resume);
 
     try {
-      await deleteDoc(doc(db, "user", user.id));
-      setGetUser((prevUser) => prevUser.filter((u) => u.id !== user.id));
       await Promise.all([
+        deleteDoc(doc(db, "user", user.id)),
         deleteObject(ref(storage, imgTrimUrl)),
         deleteObject(ref(storage, resTrimUrl)),
       ]);
+
+      setGetUser((prevUser) => prevUser.filter((u) => u.id !== user.id));
     } catch (error) {
       console.error("Error deleting record:", error);
     }
   };
-
 
   return (
     <>
@@ -101,12 +98,12 @@ export default function ViewRecords() {
                   </td>
                   <td className="tableButton">
                     <div className="buttoncontainer">
-                        <Link
-                          className="linkdec editbtn"
-                          to={`/view/${user.id}/Edit`}
-                        >
-                          Edit
-                        </Link>
+                      <Link
+                        className="linkdec editbtn"
+                        to={`/view/${user.id}/Edit`}
+                      >
+                        Edit
+                      </Link>
                       <button onClick={() => deleteRecord(user)} className="delbtn">Delete</button>
                     </div>
                   </td>
